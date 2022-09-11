@@ -30,9 +30,14 @@ public:
 		return Value;
 	}
 
-	void SetValue(UObject* NewValue)
+	bool SetValue(UObject* NewValue)
 	{
-		Value = NewValue;
+		if (Value != NewValue)
+		{
+			Value = NewValue;
+			return true;
+		}
+		return false;
 	}
 
 	virtual void SetFrom(const UGeneralBlackboardKey* Other) override

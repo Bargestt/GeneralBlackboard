@@ -9,7 +9,7 @@
 
 class UGeneralBlackboardKey;
 
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGeneralBlackboardKeyChanged, UGeneralBlackboard*, Blackboard, FName, Key);
 
 
 /**  */
@@ -61,8 +61,8 @@ UCLASS(Blueprintable, collapseCategories, meta = (DontUseGenericSpawnObject = "T
 class GENERALBLACKBOARD_API UGeneralBlackboard : public UObject
 {
 	GENERATED_BODY()
-public:
 
+public:
 #if WITH_EDITOR
 	UPROPERTY(EditAnywhere)
 	FGeneralBlackboardController Controller;
@@ -73,8 +73,14 @@ public:
 
 	UPROPERTY()
 	bool bShowKeys;
-
 #endif //WITH_EDITOR
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FGeneralBlackboardKeyChanged OnKeyChanged;
+	
+
+
 
 protected:
 	UPROPERTY(VisibleAnywhere, meta = (EditCondition = "bShowKeys", EditConditionHides = true))
@@ -92,7 +98,6 @@ protected:
 		return Keys.Add(KeyName, Data);
 	}
 
-	uint8 bInitialized : 1;
 
 public:
 	UGeneralBlackboard();
@@ -208,7 +213,10 @@ protected:
 			return false;
 		}
 
-		CastChecked<TKeyClass>(Key)->SetValue(NewValue);
+		if (CastChecked<TKeyClass>(Key)->SetValue(NewValue))
+		{
+			OnKeyChanged.Broadcast(this, Name);
+		}
 		return true;
 	}
 public:

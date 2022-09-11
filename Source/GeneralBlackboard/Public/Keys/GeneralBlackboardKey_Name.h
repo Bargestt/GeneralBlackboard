@@ -27,9 +27,14 @@ public:
 		return Value;
 	}
 
-	void SetValue(const FName& NewValue)
+	bool SetValue(const FName& NewValue)
 	{
-		Value = NewValue;
+		if (Value != NewValue)
+		{
+			Value = NewValue;
+			return true;
+		}
+		return false;
 	}
 
 	virtual void SetFrom(const UGeneralBlackboardKey* Other) override

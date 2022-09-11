@@ -27,17 +27,22 @@ public:
 		return Value;
 	}
 
+	bool SetValue(const FText& NewValue)
+	{
+		if (!Value.EqualTo(NewValue))
+		{
+			Value = NewValue;
+			return true;
+		}
+		return false;
+	}
+
 	virtual void SetFrom(const UGeneralBlackboardKey* Other) override
 	{
 		if (const ThisClass* Casted = Cast<ThisClass>(Other))
 		{
 			SetValue(Casted->GetValue());
 		}
-	}
-
-	void SetValue(const FText& NewValue)
-	{
-		Value = NewValue;
 	}
 
 	virtual bool ImportFromString(const FString& String) override

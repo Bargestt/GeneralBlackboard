@@ -7,6 +7,7 @@
 #include <UObject/WeakFieldPtr.h>
 #include "GeneralBlackboardKey.generated.h"
 
+
 /**
  * 
  */
@@ -45,4 +46,10 @@ public:
 		unimplemented();
 		return false;
 	}
+
+	virtual void OnValueChanged()
+	{
+
+	}
+
 };

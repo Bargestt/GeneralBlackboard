@@ -27,9 +27,14 @@ public:
 		return Value;
 	}
 
-	void SetValue(const bool& NewValue)
+	bool SetValue(const bool& NewValue)
 	{
-		Value = NewValue;
+		if (Value != NewValue)
+		{
+			Value = NewValue;
+			return true;
+		}
+		return false;
 	}
 
 
@@ -53,3 +58,4 @@ public:
 		return true;
 	}
 };
+

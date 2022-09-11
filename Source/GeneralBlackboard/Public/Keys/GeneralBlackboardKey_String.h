@@ -25,6 +25,16 @@ public:
 	FString GetValue() const
 	{
 		return Value;
+	}	
+
+	bool SetValue(const FString& NewValue)
+	{
+		if (Value != NewValue)
+		{
+			Value = NewValue;
+			return true;
+		}
+		return false;
 	}
 
 	virtual void SetFrom(const UGeneralBlackboardKey* Other) override
@@ -33,11 +43,6 @@ public:
 		{
 			SetValue(Casted->GetValue());
 		}
-	}
-
-	void SetValue(const FString& NewValue)
-	{
-		Value = NewValue;
 	}
 
 	virtual bool ImportFromString(const FString& String) override
