@@ -3,46 +3,32 @@
 #include "GeneralBlackboardCustomizationHelpers.h"
 #include <ClassViewerModule.h>
 #include <ClassViewerFilter.h>
-#include "../GeneralBlackboardStyle.h"
+#include "GeneralBlackboardStyle.h"
+#include "GeneralBlackboardKeyFilter.h"
 
-TSharedRef<SWidget> FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions(FOnClassPicked OnPicked)
+TSharedRef<SWidget> FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions(const FClassFilterIntersection& ClassFilter, FOnClassPicked OnPicked)
 {
-	class FGeneralBlackboardClassFilter : public IClassViewerFilter
-	{
-	public:
-
-		virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
-		{
-			if (InClass != nullptr)
-			{
-				return !InClass->HasAnyClassFlags(CLASS_Abstract | CLASS_HideDropDown) &&
-					InClass->HasAnyClassFlags(CLASS_EditInlineNew) &&
-					InClass->IsChildOf(UGeneralBlackboardKey::StaticClass());
-			}
-			return false;
-		}
-
-		virtual bool IsUnloadedClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const TSharedRef< const IUnloadedBlueprintData > InUnloadedClassData, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
-		{
-			return InUnloadedClassData->IsChildOf(UGeneralBlackboardKey::StaticClass());
-		}
-	};
-
 	FClassViewerInitializationOptions Options;
 	Options.bShowUnloadedBlueprints = true;
 	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::DisplayName;
-	Options.ClassFilter = MakeShareable(new FGeneralBlackboardClassFilter);
+	Options.ClassFilter = MakeShared<FGeneralBlackboardClassFilter>(ClassFilter);
+
 
 	return SNew(SBox)
-	.WidthOverride(280)
+	.WidthOverride(180)
 	[
-		SNew(SVerticalBox)
-		+SVerticalBox::Slot()
-		.AutoHeight()
-		.MaxHeight(500)
+		SNew(SBorder)
+		.BorderImage(FEditorStyle::Get().GetBrush("Menu.Background"))
+		.Padding(1.0f)
 		[
-			FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer").CreateClassViewer(Options, OnPicked)
-		]			
+			SNew(SVerticalBox)
+			+SVerticalBox::Slot()
+			.AutoHeight()
+			.MaxHeight(500)
+			[
+				FModuleManager::LoadModuleChecked<FClassViewerModule>("ClassViewer").CreateClassViewer(Options, OnPicked)
+			]
+		]
 	];
 }
 

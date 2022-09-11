@@ -12,6 +12,7 @@
 
 #include <EditorFontGlyphs.h>
 #include <Widgets/Text/SInlineEditableTextBlock.h>
+#include "GeneralBlackboardKeyFilter.h"
 
 
 
@@ -47,8 +48,7 @@ public:
 				.ContentPadding(FMargin(0, 1, 5, 1))
 				.IsEnabled(CanChangeClass())				
 				.ToolTipText(this, &SBlackoardKey_Name::GetKeyTypeTooltip)
-				.OnGetMenuContent_Static(&FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions,
-					FOnClassPicked::CreateRaw(this, &SBlackoardKey_Name::HandleKeyClassPicked))
+				.OnGetMenuContent(this, &SBlackoardKey_Name::CreateClassPicker)
 				.ButtonContent()
 				[
 					SNew(SImage)
@@ -204,6 +204,25 @@ private:
 	{		
 		FString CurrentValue;
 		return KeyNameHandle->GetValueAsDisplayString(CurrentValue) == FPropertyAccess::Success;
+	}
+
+	TSharedRef<SWidget> CreateClassPicker()
+	{	
+		FClassFilterIntersection Filter;
+		{
+			TArray<UObject*> Objects;
+			KeyNameHandle->GetOuterObjects(Objects);
+			for (UObject* Entry : Objects)
+			{
+				if (UGeneralBlackboard* Blackboard = Cast<UGeneralBlackboard>(Entry))
+				{
+					Filter.AddFilters(Blackboard->AllowedKeys);
+				}
+			}
+		}
+
+		return FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions(Filter, 
+			FOnClassPicked::CreateRaw(this, &SBlackoardKey_Name::HandleKeyClassPicked));
 	}
 
 	void HandleKeyClassPicked(UClass* InClass)
@@ -443,8 +462,7 @@ void FGeneralBlackboardControllerCustomization::CustomizeChildren(TSharedRef<IPr
 						.ButtonStyle(&FEditorStyle::Get().GetWidgetStyle< FButtonStyle >("FlatButton.Success"))
 						.ForegroundColor(FCoreStyle::Get().GetSlateColor("DefaultForeground"))
 						.HasDownArrow(false)
-						.OnGetMenuContent_Static(&FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions,
-							FOnClassPicked::CreateRaw(this, &FGeneralBlackboardControllerCustomization::HandleKeyClassPicked))
+						.OnGetMenuContent(this, &FGeneralBlackboardControllerCustomization::CreateClassPicker)
 						.ContentPadding(FMargin(5, 0))
 						.VAlign(VAlign_Center)
 						.HAlign(HAlign_Center)
@@ -466,12 +484,28 @@ void FGeneralBlackboardControllerCustomization::CustomizeChildren(TSharedRef<IPr
 		];
 }
 
-
-
-
 void FGeneralBlackboardControllerCustomization::Refresh()
 {
 	Utils->ForceRefresh();
+}
+
+TSharedRef<SWidget> FGeneralBlackboardControllerCustomization::CreateClassPicker()
+{
+	FClassFilterIntersection Filter;
+	{
+		TArray<UObject*> Objects;
+		Keys->GetOuterObjects(Objects);
+		for (UObject* Entry : Objects)
+		{
+			if (UGeneralBlackboard* Blackboard = Cast<UGeneralBlackboard>(Entry))
+			{
+				Filter.AddFilters(Blackboard->AllowedKeys);
+			}
+		}
+	}
+
+	return FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions(Filter,
+		FOnClassPicked::CreateRaw(this, &FGeneralBlackboardControllerCustomization::HandleKeyClassPicked));
 }
 
 void FGeneralBlackboardControllerCustomization::HandleKeyClassPicked(UClass* InClass)

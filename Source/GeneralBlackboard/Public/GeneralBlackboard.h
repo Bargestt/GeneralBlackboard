@@ -77,9 +77,11 @@ public:
 
 public:
 	UPROPERTY(BlueprintAssignable)
-	FGeneralBlackboardKeyChanged OnKeyChanged;
-	
+	FGeneralBlackboardKeyChanged OnKeyChanged;	
 
+	/** Use to filter key types allowed to add */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TArray<TSubclassOf<UGeneralBlackboardKey>> AllowedKeys;
 
 
 protected:

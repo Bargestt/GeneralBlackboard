@@ -161,11 +161,9 @@ void FGeneralBlackboardKeySelectorCustomization::GenerateOptions()
 	if (!bHasError)
 	{
 		bool bAlowNone = true;
-
-		bool bHasFilter = false;
-		TSet<TSubclassOf<UGeneralBlackboardKey>> TypeFilter;
+		FClassFilterIntersection ClassFilter;
 		
-		// Collect data from structs
+		// Collect filter data from all selectors
 		{
 			TArray<void*> RawStructData;
 			StructHandle->AccessRawData(RawStructData);
@@ -176,23 +174,7 @@ void FGeneralBlackboardKeySelectorCustomization::GenerateOptions()
 				{
 					bAlowNone = bAlowNone && StructPtr->bAlowNone;
 
-					// Get valid type filters
-					TSet<TSubclassOf<UGeneralBlackboardKey>> StructFilter;
-					Algo::CopyIf(StructPtr->AllowedTypes, StructFilter, [](const auto& Type) { return Type != nullptr; });
-
-					// Keep intersecting filters with current one
-					if (StructFilter.Num() > 0)
-					{
-						if (bHasFilter)
-						{							
-							TypeFilter = TypeFilter.Intersect(StructFilter);
-						}
-						else
-						{
-							bHasFilter = true;
-							TypeFilter = StructFilter;
-						}
-					}
+					ClassFilter.AddFilters(StructPtr->AllowedTypes);
 				}
 			}
 		}
@@ -201,10 +183,10 @@ void FGeneralBlackboardKeySelectorCustomization::GenerateOptions()
 		const TMap<FName, FGeneralBlackboardKeyData>& KeyMap = Blackboard->GetKeyMap();
 		for (const auto& KeyPair : KeyMap)
 		{
-			TSubclassOf<UGeneralBlackboardKey> KeyType = KeyPair.Value.KeyType ? KeyPair.Value.KeyType->GetClass() : nullptr;
-			KeyTypes.Add(KeyPair.Key, KeyType);
+			TSubclassOf<UGeneralBlackboardKey> KeyTypeClass = KeyPair.Value.KeyType ? KeyPair.Value.KeyType->GetClass() : nullptr;
+			KeyTypes.Add(KeyPair.Key, KeyTypeClass);
 
-			if (KeyType && (!bHasFilter || TypeFilter.Contains(KeyType)))
+			if (ClassFilter.IsClassAllowed(KeyTypeClass))
 			{
 				Options.Add(MakeShared<FString>(KeyPair.Key.ToString()));
 			}

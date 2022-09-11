@@ -22,12 +22,12 @@ public:
 // static const FValueType InvalidValue;
 // 
 // <CppTypeName> GetValue() const;
-// void SetValue(<CppTypeName>) const;
+// bool SetValue(<CppTypeName>);
 // 
-// Use meta 'HideInChildren' to hide DefaultValue from expanded view 
+// Use meta 'HideInChildren' to hide Value from expanded view 
 	
 	
-
+	/** Set using another key */
 	virtual void SetFrom(const UGeneralBlackboardKey* Other)
 	{
 
@@ -45,11 +45,6 @@ public:
 	{
 		unimplemented();
 		return false;
-	}
-
-	virtual void OnValueChanged()
-	{
-
 	}
 
 };

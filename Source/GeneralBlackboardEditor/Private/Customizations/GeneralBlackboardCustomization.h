@@ -42,6 +42,7 @@ public:
 
 private:
 	void Refresh();
+	TSharedRef<SWidget> CreateClassPicker();
 	void HandleKeyClassPicked(UClass* InClass);
 
 private:
