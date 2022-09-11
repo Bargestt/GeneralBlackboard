@@ -24,10 +24,17 @@ public class GeneralBlackboardEditor : ModuleRules
 
 				"CoreUObject",
 				"Engine",
+				"SlateCore",
+				"Slate",
+				"EditorStyle",
+				"EditorWidgets",
 				//"DeveloperSettings",
 
+
 				"PropertyEditor",
+				"ClassViewer",
 				"UnrealEd",
+				"Projects"
 								
 			
 			}
