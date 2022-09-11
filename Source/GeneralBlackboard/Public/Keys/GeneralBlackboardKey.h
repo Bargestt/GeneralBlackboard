@@ -27,18 +27,10 @@ public:
 	
 	
 
-	/** Create key state after creating blackboard */
-	virtual void Initialize()
+	virtual void SetFrom(const UGeneralBlackboardKey* Other)
 	{
-		Reset();
-	}
 
-	/** Reset key value to default */
-	virtual void Reset()
-	{
-		unimplemented();
 	}
-
 
 	/** Import current value from string and return true when succeeded */
 	virtual bool ImportFromString(const FString& String)

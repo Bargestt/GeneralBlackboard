@@ -15,39 +15,39 @@ class GENERALBLACKBOARD_API UGeneralBlackboardKey_Vector : public UGeneralBlackb
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, meta = (HideInChildren))
-	FVector DefaultValue;
-
-	UPROPERTY()
-	FVector	CurrentValue;
+	FVector Value;
 
 	typedef FVector FValueType;
 	static const FValueType InvalidValue;
 
-	virtual void Reset() override
-	{
-		CurrentValue = DefaultValue;
-	}
-
 	FVector GetValue() const
 	{
-		return CurrentValue;
+		return Value;
 	}
 
 	void SetValue(const FVector& NewValue)
 	{
-		CurrentValue = NewValue;
+		Value = NewValue;
+	}
+
+	virtual void SetFrom(const UGeneralBlackboardKey* Other) override
+	{
+		if (const ThisClass* Casted = Cast<ThisClass>(Other))
+		{
+			SetValue(Casted->GetValue());
+		}
 	}
 
 	virtual bool ImportFromString(const FString& String) override
 	{
-		CurrentValue.InitFromString(String);
+		Value.InitFromString(String);
 		return true;
 	}
 
 	
 	virtual bool ExportToString(FString& String) const override
 	{
-		String = CurrentValue.ToString();
+		String = Value.ToString();
 		return true;
 	}
 };

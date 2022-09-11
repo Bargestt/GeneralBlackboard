@@ -4,13 +4,9 @@
 #include "GeneralBlackboardFunctionLibrary.h"
 #include "GeneralBlackboardInterface.h"
 
-UGeneralBlackboard* UGeneralBlackboardFunctionLibrary::CreateGeneralBlackboard(UObject* Outer, bool bAutoInit /*= true*/)
+UGeneralBlackboard* UGeneralBlackboardFunctionLibrary::CreateGeneralBlackboard(UObject* Outer)
 {
 	UGeneralBlackboard* Blackboard = NewObject<UGeneralBlackboard>(Outer, NAME_None);
-	if (bAutoInit)
-	{
-		Blackboard->Initialize();
-	}
 
 	return Blackboard;
 }

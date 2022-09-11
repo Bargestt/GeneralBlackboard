@@ -80,6 +80,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, meta = (EditCondition = "bShowKeys", EditConditionHides = true))
 	TMap<FName, FGeneralBlackboardKeyData> Keys;
 
+	// Use this to ensure key name consistency
+	FGeneralBlackboardKeyData& AddKey(const FName& KeyName, UGeneralBlackboardKey* KeyType)
+	{
+		check(KeyName != NAME_None);
+		check(KeyType != nullptr);
+
+		FGeneralBlackboardKeyData Data;
+		Data.KeyName = KeyName;
+		Data.KeyType = KeyType;
+		return Keys.Add(KeyName, Data);
+	}
+
 	uint8 bInitialized : 1;
 
 public:
@@ -92,21 +104,20 @@ public:
 #endif //WITH_EDITOR
 
 public:
-	/** Initialize blackboard before using it */
-	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
-	void Initialize();
 
-	/** Reset all keys values */
+	/** Set all key values using other blackboard. Extra values are discarded */
 	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
-	void Reset();
+	void SetValues(const UGeneralBlackboard* Other);
 	
+	/** Adds other blackboard keys to this one */
 	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
-	void Append(UGeneralBlackboard* Other, EBlackboardAppenRule Rule);
+	void Append(const UGeneralBlackboard* Other, EBlackboardAppenRule Rule);
 
-
+	/** Export values as strings */
 	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
 	void ExportToMap(TMap<FString, FString>& OutValueMap);
 
+	/** Export values from strings */
 	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
 	void ImportFromMap(const TMap<FString, FString>& ValueMap);
 
@@ -124,7 +135,9 @@ public:
 
 	FName GenerateKeyName(FName BaseName, TSubclassOf<UGeneralBlackboardKey> KeyType);	
 
-	UGeneralBlackboardKey* GetKey(FName Name) const;
+
+
+	UGeneralBlackboardKey* GetBlackboardKey(FName Name) const;
 
 	bool HasBlackboardKey(const FName& Key, TSubclassOf<UGeneralBlackboardKey> Class) const;
 
@@ -141,17 +154,23 @@ public:
 
 
 
+	UFUNCTION(BlueprintCallable, Category = "General Blackboard", meta = (DisplayName = "Get Blackboard Key"))
+	UGeneralBlackboardKey* BP_GetBlackboardKey(const FGeneralBlackboardKeySelector& Key) const
+	{
+		return GetBlackboardKey(Key.Name);
+	}
+
 	/** 
 	 * Returns true if blackboard has key with specified Name and Class. 
 	 * Use empty class to check by name only 
 	 */
-	UFUNCTION(BlueprintCallable, Category = "General Blackboard", meta = (DisplayName = "HasBlackboardKey"))
+	UFUNCTION(BlueprintCallable, Category = "General Blackboard", meta = (DisplayName = "Has Blackboard Key"))
 	bool BP_HasBlackboardKey(const FGeneralBlackboardKeySelector& Key, TSubclassOf<UGeneralBlackboardKey> Class) const
 	{
 		return HasBlackboardKey(Key.Name, Class);
 	}	
 
-	UFUNCTION(BlueprintCallable, Category = "General Blackboard", meta = (DisplayName = "GetBlackboardKeyClass"))
+	UFUNCTION(BlueprintCallable, Category = "General Blackboard", meta = (DisplayName = "Get Blackboard Key Class"))
 	TSubclassOf<UGeneralBlackboardKey> BP_GetBlackboardKeyClass(const FGeneralBlackboardKeySelector& Key) const
 	{
 		return GetBlackboardKeyClass(Key.Name);
@@ -167,7 +186,7 @@ protected:
 	{
 		static_assert(TIsSame<TKeyClass::FValueType, TValueType>::Value, "TKeyClass::FValueType must be same as TValueType");
 
-		UGeneralBlackboardKey* Key = GetKey(Name);
+		UGeneralBlackboardKey* Key = GetBlackboardKey(Name);
 		if (Key == nullptr || Key->GetClass() != TKeyClass::StaticClass())
 		{
 			OutValue = TKeyClass::InvalidValue;
@@ -183,7 +202,7 @@ protected:
 	{
 		static_assert(TIsSame<TKeyClass::FValueType, TValueType>::Value, "TKeyClass::FValueType must be same as TValueType");
 
-		UGeneralBlackboardKey* Key = GetKey(Name);
+		UGeneralBlackboardKey* Key = GetBlackboardKey(Name);
 		if (Key == nullptr || Key->GetClass() != TKeyClass::StaticClass())
 		{
 			return false;

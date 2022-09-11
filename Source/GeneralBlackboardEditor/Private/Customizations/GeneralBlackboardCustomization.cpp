@@ -34,6 +34,8 @@ public:
 		KeyNameHandle = DataHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FGeneralBlackboardKeyData, KeyName));
 		TypeHandle = DataHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FGeneralBlackboardKeyData, KeyType));
 
+		SetVisibility(TAttribute<EVisibility>(this, &SBlackoardKey_Name::IsVisible));
+
 		ChildSlot
 		[
 			SNew(SHorizontalBox)
@@ -43,7 +45,7 @@ public:
 				.ButtonStyle(&FEditorStyle::Get().GetWidgetStyle< FButtonStyle >("ToggleButton"))
 				.ForegroundColor(FCoreStyle::Get().GetSlateColor("DefaultForeground"))
 				.ContentPadding(FMargin(0, 1, 5, 1))
-				.IsEnabled(CanChangeClass())
+				.IsEnabled(CanChangeClass())				
 				.ToolTipText(this, &SBlackoardKey_Name::GetKeyTypeTooltip)
 				.OnGetMenuContent_Static(&FGeneralBlackboardCustomizationHelpers::CreateKeyTypePickerOptions,
 					FOnClassPicked::CreateRaw(this, &SBlackoardKey_Name::HandleKeyClassPicked))
@@ -71,7 +73,17 @@ public:
 private:
 	bool IsSelected() const
 	{		
-		return IsHovered();
+		return IsHovered() && IsEditable();
+	}
+
+	bool IsEditable() const
+	{
+		return !GEditor->IsPlaySessionInProgress();
+	}
+
+	EVisibility IsVisible() const
+	{
+		return GEditor->IsPlaySessionInProgress() ? EVisibility::HitTestInvisible : EVisibility::Visible;
 	}
 
 	TArray<UClass*> GetTypeClasses(bool bUniqueOnly) const
@@ -157,7 +169,7 @@ private:
 		{
 			if (UGeneralBlackboard* Blackboard = Cast<UGeneralBlackboard>(Entry))
 			{
-				if (Blackboard->GetKey(FName(*NewText.ToString())) != nullptr)
+				if (Blackboard->GetBlackboardKey(FName(*NewText.ToString())) != nullptr)
 				{
 					Errors.Add(FString::Printf(TEXT("Name '%s' is taken"), *NewText.ToString()));
 				}
@@ -243,14 +255,7 @@ class SBlackoardKey_Value : public SCompoundWidget
 			[
 				SAssignNew(DefaultValueSlot, SBox)
 				.MinDesiredWidth(50.0f)
-				.Visibility(this, &SBlackoardKey_Value::GetDefaultValueVisibility)
-			]
-			+ SHorizontalBox::Slot().AutoWidth().Padding(5, 0, 5, 0).VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Font(IPropertyTypeCustomizationUtils::GetRegularFont())
-				.Visibility(this, &SBlackoardKey_Value::GetCurrentValueVisibility)
-				.Text(this, &SBlackoardKey_Value::GetCurrentValueText)
+				.IsEnabled(this, &SBlackoardKey_Value::IsValueEditable)
 			]
 			+ SHorizontalBox::Slot().FillWidth(1.0f)
 			[
@@ -275,7 +280,7 @@ public:
 		TypeHandle->GetNumChildren(TypeChildren);
 		if (TypeChildren > 0)
 		{
-			TSharedPtr<IPropertyHandle> DefaultValueHandle = TypeHandle->GetChildHandle(0)->GetChildHandle("DefaultValue");
+			TSharedPtr<IPropertyHandle> DefaultValueHandle = TypeHandle->GetChildHandle(0)->GetChildHandle("Value");
 			if (DefaultValueHandle.IsValid())
 			{
 				if (DefaultValueHandle->GetProperty()->IsA(FStructProperty::StaticClass()))
@@ -308,14 +313,9 @@ public:
 		Array->DeleteItem(DataHandle->GetIndexInArray());
 	}
 
-	EVisibility GetCurrentValueVisibility() const
+	bool IsValueEditable() const
 	{
-		return GEditor->IsPlaySessionInProgress() ? EVisibility::Visible : EVisibility::Collapsed;
-	}
-
-	EVisibility GetDefaultValueVisibility() const
-	{
-		return !GEditor->IsPlaySessionInProgress() ? EVisibility::Visible : EVisibility::Collapsed;
+		return !GEditor->IsPlaySessionInProgress();
 	}
 
 	FText GetCurrentValueText() const

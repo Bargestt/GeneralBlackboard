@@ -17,7 +17,7 @@ class GENERALBLACKBOARD_API UGeneralBlackboardFunctionLibrary : public UBlueprin
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "General Blackboard")
-	static UGeneralBlackboard* CreateGeneralBlackboard(UObject* Outer, bool bAutoInit = true);
+	static UGeneralBlackboard* CreateGeneralBlackboard(UObject* Outer);
 
 
 	/** Get blackboard using GeneralBlackboardInterface. Defaults to self */

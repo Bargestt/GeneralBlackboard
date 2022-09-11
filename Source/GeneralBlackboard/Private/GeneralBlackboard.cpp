@@ -65,32 +65,25 @@ void UGeneralBlackboard::UpdateKeyDisplay()
 	});
 }
 
-void UGeneralBlackboard::Initialize()
+void UGeneralBlackboard::SetValues(const UGeneralBlackboard* Other)
 {
-	if (!bInitialized)
+	if (Other)
 	{
 		for (const auto& Pair : Keys)
 		{
-			if (Pair.Key != NAME_None && Pair.Value.KeyType)
+			if (Pair.Value.KeyType)
 			{
-				Pair.Value.KeyType->Initialize();
+				Pair.Value.KeyType->SetFrom(Other->GetBlackboardKey(Pair.Key));
 			}
 		}
-	}
+	}	
+
+#if WITH_EDITOR
+	UpdateKeyDisplay();
+#endif //WITH_EDITOR
 }
 
-void UGeneralBlackboard::Reset()
-{
-	for (const auto& Pair : Keys)
-	{
-		if (Pair.Value.KeyType)
-		{
-			Pair.Value.KeyType->Reset();
-		}
-	}
-}
-
-void UGeneralBlackboard::Append(UGeneralBlackboard* Other, EBlackboardAppenRule Rule)
+void UGeneralBlackboard::Append(const UGeneralBlackboard* Other, EBlackboardAppenRule Rule)
 {
 	if (Other)
 	{
@@ -98,22 +91,18 @@ void UGeneralBlackboard::Append(UGeneralBlackboard* Other, EBlackboardAppenRule 
 		{
 			if (Pair.Key != NAME_None && Pair.Value.KeyType)
 			{
-				UGeneralBlackboardKey* ExistingKey = GetKey(Pair.Key);
+				UGeneralBlackboardKey* ExistingKey = GetBlackboardKey(Pair.Key);
 				if (ExistingKey == nullptr || Rule == EBlackboardAppenRule::UseNew)
 				{
-					FGeneralBlackboardKeyData AddKey;
-					AddKey.KeyName = Pair.Key;
-					AddKey.KeyType = DuplicateObject<UGeneralBlackboardKey>(Pair.Value.KeyType, this);
-
-					Keys.Add(AddKey.KeyName, AddKey);
-					if (bInitialized)
-					{
-						AddKey.KeyType->Initialize();
-					}					
+					AddKey(Pair.Key, DuplicateObject<UGeneralBlackboardKey>(Pair.Value.KeyType, this));
 				}
 			}
 		}
 	}
+
+#if WITH_EDITOR
+	UpdateKeyDisplay();
+#endif //WITH_EDITOR
 }
 
 void UGeneralBlackboard::ExportToMap(TMap<FString, FString>& OutValueMap)
@@ -134,22 +123,29 @@ void UGeneralBlackboard::ExportToMap(TMap<FString, FString>& OutValueMap)
 
 void UGeneralBlackboard::ImportFromMap(const TMap<FString, FString>& ValueMap)
 {
+	for (const auto& Pair : ValueMap)
+	{
+		FName KeyName = FName(Pair.Key);
+		if (KeyName != NAME_None)
+		{
+			UGeneralBlackboardKey* Key = GetBlackboardKey(*Pair.Key);
+			if (Key)
+			{
+				Key->ImportFromString(Pair.Value);
+			}
+		}
+	}
 
+#if WITH_EDITOR
+	UpdateKeyDisplay();
+#endif //WITH_EDITOR
 }
 
 UGeneralBlackboardKey* UGeneralBlackboard::AddNewKey(FName NewKeyName, TSubclassOf<UGeneralBlackboardKey> KeyType)
 {
 	if (KeyType)
 	{
-		FGeneralBlackboardKeyData NewKeyData;
-		NewKeyData.KeyName = GenerateKeyName(NewKeyName, KeyType);
-		NewKeyData.KeyType = NewObject<UGeneralBlackboardKey>(this, KeyType);
-
-		Keys.Add(NewKeyData.KeyName, NewKeyData);
-		if (bInitialized)
-		{
-			NewKeyData.KeyType->Initialize();
-		}
+		FGeneralBlackboardKeyData& NewKeyData = AddKey(GenerateKeyName(NewKeyName, KeyType), NewObject<UGeneralBlackboardKey>(this, KeyType));
 
 #if WITH_EDITOR
 		UpdateKeyDisplay();
@@ -169,10 +165,6 @@ bool UGeneralBlackboard::SetKeyType(FName KeyName, TSubclassOf<UGeneralBlackboar
 		if (KeyPtr)
 		{
 			KeyPtr->KeyType = NewObject<UGeneralBlackboardKey>(this, NewKeyType);
-			if (bInitialized)
-			{
-				KeyPtr->KeyType->Initialize();
-			}
 
 #if WITH_EDITOR
 			UpdateKeyDisplay();
@@ -203,14 +195,16 @@ bool UGeneralBlackboard::RenameKey(FName KeyName, FName NewKeyName)
 		FGeneralBlackboardKeyData Data;
 		Keys.RemoveAndCopyValue(KeyName, Data);
 
-		Data.KeyName = NewKeyName;
-		Keys.Add(Data.KeyName, Data);
+		if (Data.KeyType != nullptr)
+		{
+			AddKey(NewKeyName, Data.KeyType);
 
 #if WITH_EDITOR
-		UpdateKeyDisplay();
+			UpdateKeyDisplay();
 #endif //WITH_EDITOR
 
-		return true;
+			return true;
+		}
 	}
 	return false;
 }
@@ -256,7 +250,7 @@ FName UGeneralBlackboard::GenerateKeyName(FName BaseName, TSubclassOf<UGeneralBl
 	return FName(*NewKeyNameString);
 }
 
-UGeneralBlackboardKey* UGeneralBlackboard::GetKey(FName Name) const
+UGeneralBlackboardKey* UGeneralBlackboard::GetBlackboardKey(FName Name) const
 {
 	if (Name != NAME_None)
 	{
@@ -272,13 +266,13 @@ UGeneralBlackboardKey* UGeneralBlackboard::GetKey(FName Name) const
 
 bool UGeneralBlackboard::HasBlackboardKey(const FName& Key, TSubclassOf<UGeneralBlackboardKey> Class) const
 {
-	UGeneralBlackboardKey* KeyType = GetKey(Key);
+	UGeneralBlackboardKey* KeyType = GetBlackboardKey(Key);
 	return KeyType && (!Class || KeyType->IsA(Class));
 }
 
 TSubclassOf<UGeneralBlackboardKey> UGeneralBlackboard::GetBlackboardKeyClass(const FName& Key) const
 {
-	UGeneralBlackboardKey* KeyType = GetKey(Key);
+	UGeneralBlackboardKey* KeyType = GetBlackboardKey(Key);
 	return KeyType ? KeyType->GetClass() : nullptr;
 }
 

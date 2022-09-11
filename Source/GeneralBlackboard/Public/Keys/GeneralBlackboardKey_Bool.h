@@ -15,40 +15,41 @@ class GENERALBLACKBOARD_API UGeneralBlackboardKey_Bool : public UGeneralBlackboa
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, meta = (HideInChildren))
-	bool DefaultValue;
-
-	UPROPERTY()
-	bool CurrentValue;
+	bool Value;
 
 
 	typedef bool FValueType;
 	static const FValueType InvalidValue;
 
-	virtual void Reset() override
-	{
-		CurrentValue = DefaultValue;
-	}
 	
 	bool GetValue() const
 	{
-		return CurrentValue;
+		return Value;
 	}
 
 	void SetValue(const bool& NewValue)
 	{
-		CurrentValue = NewValue;
+		Value = NewValue;
 	}
 
 
+	virtual void SetFrom(const UGeneralBlackboardKey* Other) override 
+	{		
+		if (const ThisClass* Casted = Cast<ThisClass>(Other))
+		{
+			SetValue(Casted->GetValue());
+		}
+	}
+
 	virtual bool ImportFromString(const FString& String) override
 	{
-		CurrentValue = String.Equals(TEXT("True")) || String.Equals(TEXT("1"));
+		Value = String.Equals(TEXT("True")) || String.Equals(TEXT("1"));
 		return true;
 	}
 
 	virtual bool ExportToString(FString& String) const override
 	{
-		String = CurrentValue ? TEXT("1") : TEXT("0");
+		String = Value ? TEXT("1") : TEXT("0");
 		return true;
 	}
 };

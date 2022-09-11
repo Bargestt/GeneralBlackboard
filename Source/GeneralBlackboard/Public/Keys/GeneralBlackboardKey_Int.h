@@ -15,38 +15,40 @@ class GENERALBLACKBOARD_API UGeneralBlackboardKey_Int : public UGeneralBlackboar
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, meta = (HideInChildren))
-	int32 DefaultValue;
+	int32 Value;
 
-	UPROPERTY()
-	int32 CurrentValue;
 
 	typedef int32 FValueType;
 	static const FValueType InvalidValue;
 
-	virtual void Reset() override
-	{
-		CurrentValue = DefaultValue;
-	}
 
 	int32 GetValue() const
 	{
-		return CurrentValue;
+		return Value;
 	}
 
 	void SetValue(const int32& NewValue)
 	{
-		CurrentValue = NewValue;
+		Value = NewValue;
+	}
+
+	virtual void SetFrom(const UGeneralBlackboardKey* Other) override
+	{
+		if (const ThisClass* Casted = Cast<ThisClass>(Other))
+		{
+			SetValue(Casted->GetValue());
+		}
 	}
 
 	virtual bool ImportFromString(const FString& String) override
 	{
-		CurrentValue = FCString::Atoi(*String);
+		Value = FCString::Atoi(*String);
 		return true;
 	}
 
 	virtual bool ExportToString(FString& String) const override
 	{
-		String = FString::FromInt(CurrentValue);
+		String = FString::FromInt(Value);
 		return true;
 	}
 };
